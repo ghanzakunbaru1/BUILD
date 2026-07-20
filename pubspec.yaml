@@ -1,0 +1,96 @@
+name: ghanz_ai
+description: "GHANZ AI - AI Assistant Android App (ChatGPT + Google Assistant + Gemini)"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI
+  cupertino_icons: ^1.0.8
+  
+  # State Management
+  provider: ^6.1.2
+  
+  # Networking
+  dio: ^5.4.3
+  flutter_dotenv: ^5.1.0
+  
+  # Routing
+  go_router: ^14.1.1
+  
+  # Permissions
+  permission_handler: ^11.3.1
+  
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  
+  # File & Media - UPDATE
+  file_picker: ^8.0.6
+  image_picker: ^1.1.0
+  camera: ^0.10.6
+  
+  # Chat UI
+  flutter_markdown: ^0.6.23
+  flutter_highlight: ^0.7.0
+  
+  # Voice
+  speech_to_text: ^6.6.0
+  flutter_tts: ^3.8.3
+  
+  # Device Features - UPDATE
+  torch_light: ^1.0.1
+  android_intent_plus: ^4.0.3
+  flutter_local_notifications: ^17.2.1  # KRITICAL: UPDATE INI
+  url_launcher: ^6.3.0
+  share_plus: ^10.0.0
+  vibration: ^1.8.4
+  screen_brightness: ^1.0.0
+  
+  # Connectivity & QR
+  connectivity_plus: ^6.0.3
+  mobile_scanner: ^4.0.1
+  
+  # Storage
+  path_provider: ^2.1.4
+  path: ^1.9.0
+  archive: ^3.5.1
+  
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.11
+  flutter_native_splash: ^2.4.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+    - assets/icon/
+
+flutter_native_splash:
+  color: "#0A0A0F"
+  image: assets/icon/splash_logo.png
+  android_12:
+    color: "#0A0A0F"
+    image: assets/icon/splash_logo.png
+  fullscreen: true
+
+flutter_launcher_icons:
+  android: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#0A0A0F"
+  adaptive_icon_foreground: "assets/icon/app_icon_fg.png"
+  min_sdk_android: 26
