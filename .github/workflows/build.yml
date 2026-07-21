@@ -37,9 +37,22 @@ jobs:
           flutter-version: '3.27.0'
           channel: 'stable'
       
-      - name: 📦 Install dependencies
-        run: flutter pub get
-        
+      - name: 🔍 Cek pubspec.yaml
+        run: |
+          echo "=== ISI PUBSPEC ==="
+          cat pubspec.yaml || echo "❌ pubspec.yaml TIDAK DITEMUKAN!"
+          echo "=== LIST FILE ==="
+          ls -la
+          
+      - name: 📦 Install dependencies (DETAIL)
+        run: |
+          flutter pub get 2>&1 | tee pub_get.log
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "❌ PUB GET GAGAL!"
+            cat pub_get.log
+            exit 1
+          fi
+          
       - name: 🛠️ Build APK
         run: |
           if [ "${{ github.event.inputs.build_type }}" = "debug" ]; then
