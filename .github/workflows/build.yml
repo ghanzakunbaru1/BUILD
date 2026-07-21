@@ -34,32 +34,17 @@ jobs:
       - name: 🎯 Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'
+          flutter-version: '3.29.0'   # ← GANTI KE 3.29.0
           channel: 'stable'
       
-      - name: 🔧 Fix pubspec.yaml
+      - name: 🔍 Cek Version
         run: |
-          # Fix SDK version
-          sed -i 's/sdk: ">=.* <.*"/sdk: ">=3.0.0 <4.0.0"/g' pubspec.yaml || true
-          # Fix flutter_local_notifications
-          sed -i 's/flutter_local_notifications:.*/flutter_local_notifications: ^17.2.1/g' pubspec.yaml || true
-          # Fix file_picker
-          sed -i 's/file_picker:.*/file_picker: ^8.0.0/g' pubspec.yaml || true
-          echo "=== PUBSPEC AFTER FIX ==="
-          cat pubspec.yaml
+          flutter --version
+          dart --version
           
       - name: 📦 Install dependencies
         run: flutter pub get
         
-      - name: 🔍 Cek struktur
-        run: |
-          echo "=== ISI ROOT ==="
-          ls -la
-          echo "=== CEK LIB ==="
-          ls -la lib/ || echo "lib/ not found"
-          echo "=== CEK ANDROID ==="
-          ls -la android/ || echo "android/ not found"
-          
       - name: 🛠️ Build APK
         run: |
           if [ "${{ github.event.inputs.build_type }}" = "debug" ]; then
