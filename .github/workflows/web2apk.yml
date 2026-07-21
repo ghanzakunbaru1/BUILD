@@ -1,0 +1,56 @@
+name: Web to APK Builder
+
+on:
+  workflow_dispatch:
+    inputs:
+      web_url:
+        description: 'Website URL to wrap'
+        required: true
+      app_name:
+        description: 'App Name'
+        required: true
+      icon_url:
+        description: 'Icon URL'
+        required: true
+
+jobs:
+  build:
+    name: Build Web2APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # Asumsi: Kamu punya template flutter webview di folder 'webview_template'
+      - name: Prepare Template & Inject Inputs
+        run: |
+          echo "Menyiapkan aplikasi: ${{ github.event.inputs.app_name }}"
+          echo "Target URL: ${{ github.event.inputs.web_url }}"
+          
+          # Contoh logika mengganti nama aplikasi dan URL di dalam source code template
+          # sed -i "s/OLD_APP_NAME/${{ github.event.inputs.app_name }}/g" webview_template/android/app/src/main/AndroidManifest.xml
+          # sed -i "s|OLD_URL|${{ github.event.inputs.web_url }}|g" webview_template/lib/main.dart
+          
+          # Download ikon dan timpa ikon bawaan
+          wget -O icon.png "${{ github.event.inputs.icon_url }}"
+          # mv icon.png webview_template/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+
+      - name: Install dependencies
+        working-directory: ./webview_template
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: ./webview_template
+        run: flutter build apk --release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web2apk-release
+          path: webview_template/build/app/outputs/flutter-apk/app-release.apk
