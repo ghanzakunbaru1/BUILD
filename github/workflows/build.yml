@@ -1,7 +1,21 @@
 name: Build Flutter APK
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # <-- TRIGGER UTAMA
+    inputs:           # <-- INPUT YANG DITERIMA DARI API
+      zip_url:
+        description: 'URL ZIP file'
+        required: true
+        type: string
+      tag:
+        description: 'Build tag'
+        required: true
+        type: string
+      build_type:
+        description: 'Build type (release/debug)'
+        required: false
+        default: 'release'
+        type: string
 
 jobs:
   build:
@@ -27,18 +41,35 @@ jobs:
         run: |
           FILE="/home/runner/.pub-cache/hosted/pub.dev/flutter_local_notifications-16.3.3/android/src/main/java/com/dexterous/flutterlocalnotifications/FlutterLocalNotificationsPlugin.java"
           if [ -f "$FILE" ]; then
-            sed -i 's/bigPictureStyle.bigLargeIcon(null);/// bigPictureStyle.bigLargeIcon(null);/g' "$FILE"
+            sed -i 's/bigPictureStyle.bigLargeIcon(null);/\/\/ bigPictureStyle.bigLargeIcon(null);/g' "$FILE"
             echo "✅ Fixed flutter_local_notifications"
           fi
+      
+      - name: 🔍 Debug - Cek Struktur
+        run: |
+          echo "=== ISI ROOT ==="
+          ls -la
+          echo "=== CEK PUBSPEC ==="
+          cat pubspec.yaml || echo "❌ pubspec.yaml TIDAK DITEMUKAN!"
+          echo "=== CEK ANDROID ==="
+          ls -la android/ || echo "❌ android/ TIDAK DITEMUKAN!"
           
       - name: 📦 Install dependencies
         run: flutter pub get
         
       - name: 🛠️ Build APK
-        run: flutter build apk --release --android-skip-build-dependency-validation
-        
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" = "debug" ]; then
+            flutter build apk --debug
+          else
+            flutter build apk --release --android-skip-build-dependency-validation
+          fi
+          
       - name: 📤 Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: flutter-apk
-          path: build/app/outputs/flutter-apk/*.apk
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            build/app/outputs/apk/debug/*.apk
+            build/app/outputs/apk/release/*.apk
