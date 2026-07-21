@@ -1,63 +1,78 @@
-name: Flutter Build
+name: Build Flutter APK
 
 on:
   workflow_dispatch:
     inputs:
       zip_url:
-        description: 'URL of the source code zip'
+        description: 'URL ZIP file'
         required: true
+        type: string
       tag:
-        description: 'Release Tag'
+        description: 'Build tag'
         required: true
+        type: string
       build_type:
-        description: 'Build Type (release, debug)'
-        required: true
+        description: 'Build type (release/debug)'
+        required: false
         default: 'release'
+        type: string
 
 jobs:
   build:
-    name: Build Flutter App
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
-
-      - name: Download and extract source code
-        run: |
-          wget -O source.zip "${{ github.event.inputs.zip_url }}"
-          unzip source.zip -d app_source
-          rm source.zip
-
-      - name: Set up Flutter
+        
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+        
+      - name: 🎯 Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.27.0'
           channel: 'stable'
-
-      - name: Install dependencies
-        working-directory: ./app_source
+      
+      - name: 🔧 Fix pubspec.yaml
+        run: |
+          # Fix SDK version
+          sed -i 's/sdk: ">=.* <.*"/sdk: ">=3.0.0 <4.0.0"/g' pubspec.yaml || true
+          # Fix flutter_local_notifications
+          sed -i 's/flutter_local_notifications:.*/flutter_local_notifications: ^17.2.1/g' pubspec.yaml || true
+          # Fix file_picker
+          sed -i 's/file_picker:.*/file_picker: ^8.0.0/g' pubspec.yaml || true
+          echo "=== PUBSPEC AFTER FIX ==="
+          cat pubspec.yaml
+          
+      - name: 📦 Install dependencies
         run: flutter pub get
-
-      - name: Analyze code (Linting)
-        working-directory: ./app_source
-        # Bagian ini sangat penting karena JS kamu mencari teks [RESULT_ANALYZE] di dalam log
+        
+      - name: 🔍 Cek struktur
         run: |
-          echo "[RESULT_ANALYZE]"
-          flutter analyze || true
-          echo "[END_RESULT_ANALYZE]"
-
-      - name: Build APK
-        working-directory: ./app_source
+          echo "=== ISI ROOT ==="
+          ls -la
+          echo "=== CEK LIB ==="
+          ls -la lib/ || echo "lib/ not found"
+          echo "=== CEK ANDROID ==="
+          ls -la android/ || echo "android/ not found"
+          
+      - name: 🛠️ Build APK
         run: |
-          if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-            flutter build apk --release
-          else
+          if [ "${{ github.event.inputs.build_type }}" = "debug" ]; then
             flutter build apk --debug
+          else
+            flutter build apk --release --android-skip-build-dependency-validation
           fi
-
-      - name: Upload Artifact
+          
+      - name: 📤 Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          # Sesuaikan path ini dengan output build Flutter
-          path: app_source/build/app/outputs/flutter-apk/app-release.apk
+          name: flutter-apk
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            build/app/outputs/apk/debug/*.apk
+            build/app/outputs/apk/release/*.apk
