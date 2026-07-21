@@ -1,71 +1,63 @@
-name: Build Flutter APK
+name: Flutter Build
 
 on:
   workflow_dispatch:
     inputs:
       zip_url:
-        description: 'URL ZIP file'
+        description: 'URL of the source code zip'
         required: true
-        type: string
       tag:
-        description: 'Build tag'
+        description: 'Release Tag'
         required: true
-        type: string
       build_type:
-        description: 'Build type (release/debug)'
-        required: false
+        description: 'Build Type (release, debug)'
+        required: true
         default: 'release'
-        type: string
 
 jobs:
   build:
+    name: Build Flutter App
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
-        
-      - name: ☕ Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-        
-      - name: 🎯 Setup Flutter
+
+      - name: Download and extract source code
+        run: |
+          wget -O source.zip "${{ github.event.inputs.zip_url }}"
+          unzip source.zip -d app_source
+          rm source.zip
+
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'
           channel: 'stable'
-      
-      - name: 🔍 Cek pubspec.yaml
+
+      - name: Install dependencies
+        working-directory: ./app_source
+        run: flutter pub get
+
+      - name: Analyze code (Linting)
+        working-directory: ./app_source
+        # Bagian ini sangat penting karena JS kamu mencari teks [RESULT_ANALYZE] di dalam log
         run: |
-          echo "=== ISI PUBSPEC ==="
-          cat pubspec.yaml || echo "❌ pubspec.yaml TIDAK DITEMUKAN!"
-          echo "=== LIST FILE ==="
-          ls -la
-          
-      - name: 📦 Install dependencies (DETAIL)
+          echo "[RESULT_ANALYZE]"
+          flutter analyze || true
+          echo "[END_RESULT_ANALYZE]"
+
+      - name: Build APK
+        working-directory: ./app_source
         run: |
-          flutter pub get 2>&1 | tee pub_get.log
-          if [ ${PIPESTATUS[0]} -ne 0 ]; then
-            echo "❌ PUB GET GAGAL!"
-            cat pub_get.log
-            exit 1
-          fi
-          
-      - name: 🛠️ Build APK
-        run: |
-          if [ "${{ github.event.inputs.build_type }}" = "debug" ]; then
-            flutter build apk --debug
+          if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+            flutter build apk --release
           else
-            flutter build apk --release --android-skip-build-dependency-validation
+            flutter build apk --debug
           fi
-          
-      - name: 📤 Upload APK
+
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-apk
-          path: |
-            build/app/outputs/flutter-apk/*.apk
-            build/app/outputs/apk/debug/*.apk
-            build/app/outputs/apk/release/*.apk
+          name: app-release
+          # Sesuaikan path ini dengan output build Flutter
+          path: app_source/build/app/outputs/flutter-apk/app-release.apk
